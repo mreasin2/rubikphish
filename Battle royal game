@@ -1,0 +1,97 @@
+using UnityEngine;
+
+public class PlayerController : MonoBehaviour
+{
+    public float moveSpeed = 5f;
+    public GameObject bulletPrefab;
+    public Transform firePoint;
+
+    void Update()
+    {
+        float x = Input.GetAxis("Horizontal") * moveSpeed * Time.deltaTime;
+        float z = Input.GetAxis("Vertical") * moveSpeed * Time.deltaTime;
+
+        transform.Translate(new Vector3(x, 0, z));
+
+        if (Input.GetButtonDown("Fire1"))
+        {
+            Shoot();
+        }
+    }
+
+    void Shoot()
+    {
+        Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+    }
+}
+using UnityEngine;
+
+public class Bullet : MonoBehaviour
+{
+    public float speed = 20f;
+    public float lifetime = 2f;
+
+    void Start()
+    {
+        Destroy(gameObject, lifetime);
+    }
+
+    void Update()
+    {
+        transform.Translate(Vector3.forward * speed * Time.deltaTime);
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Enemy"))
+        {
+            Destroy(other.gameObject);
+            Destroy(gameObject);
+        }
+    }
+}
+using UnityEngine;
+
+public class ZoneController : MonoBehaviour
+{
+    public float shrinkSpeed = 0.1f;
+    public float minSize = 10f;
+
+    void Update()
+    {
+        if (transform.localScale.x > minSize)
+        {
+            transform.localScale -= Vector3.one * shrinkSpeed * Time.deltaTime;
+        }
+    }
+}
+using UnityEngine;
+using UnityEngine.AI;
+
+public class EnemyAI : MonoBehaviour
+{
+    public Transform[] waypoints;
+    private int index = 0;
+    private NavMeshAgent agent;
+
+    void Start()
+    {
+        agent = GetComponent<NavMeshAgent>();
+        MoveToNextPoint();
+    }
+
+    void MoveToNextPoint()
+    {
+        if (waypoints.Length == 0) return;
+        agent.destination = waypoints[index].position;
+        index = (index + 1) % waypoints.Length;
+    }
+
+    void Update()
+    {
+        if (!agent.pathPending && agent.remainingDistance < 0.5f)
+        {
+            MoveToNextPoint();
+        }
+    }
+}
